@@ -1,0 +1,5 @@
+name: FrontiereLock
+version: '1.0'
+main: io.github.meyllane.frontiereLock.FrontiereLock
+api-version: '1.21'
+depend: [CommandAPI]
