@@ -1,5 +1,21 @@
-name: FrontiereLock
+name: SFLock
 version: '1.0'
-main: io.github.meyllane.frontiereLock.FrontiereLock
+main: io.github.meyllane.frontiereLock.SFLock
 api-version: '1.21'
 depend: [CommandAPI]
+permissions:
+  sflock.*:
+    description: "Global permission"
+    default: op
+    children:
+      sflock.lock: true
+      sflock.bypass: true
+      sflock.generatekey: true
+  sflock.lock:
+    description: "Permission to create lock."
+  sflock.bypass:
+    description: "Permission that allows to bypass all locks."
+  sflock.generatekey:
+    description: "Permission to generate a key for a lock."
+  sflock.view:
+    description: "Permission to view a lock and to see all locks in suggestions."
