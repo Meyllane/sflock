@@ -50,6 +50,7 @@ public class onPlayerInteractListener implements Listener {
             if (stack == null) continue;
             if (stack.isEmpty() && stack.getType() != Material.RABBIT_FOOT) continue;
 
+            //TODO : To be exported in a helper function, for clarity?
             if (stack.getType() == Material.BUNDLE) {
                 BundleContents bundle = stack.getData(DataComponentTypes.BUNDLE_CONTENTS);
                 contents.addAll(
@@ -57,6 +58,7 @@ public class onPlayerInteractListener implements Listener {
                 );
             }
 
+            //TODO : To be exported in a helper function, for clarity?
             if (stack.getType() == Material.SHULKER_BOX) {
                 BlockStateMeta im = (BlockStateMeta) stack.getItemMeta();
                 ShulkerBox box = (ShulkerBox) im.getBlockState();
