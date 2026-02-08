@@ -17,6 +17,7 @@ import org.bukkit.configuration.serialization.ConfigurationSerialization;
 import org.bukkit.plugin.java.JavaPlugin;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -68,5 +69,15 @@ public final class SFLock extends JavaPlugin {
         }
 
         this.getServer().getLogger().log(Level.INFO, count + " LockedBlocks have been loaded!");
+    }
+
+    public static void saveChanges() {
+        SFLock.getPlugin(SFLock.class).getServer().getScheduler().runTaskAsynchronously(SFLock.getPlugin(SFLock.class), runner -> {
+            try {
+                SFLock.config.save(SFLock.configFile);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
     }
 }
