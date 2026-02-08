@@ -22,6 +22,7 @@ import org.bukkit.persistence.PersistentDataType;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 public class FLockCommand {
     public static final NamespacedKey lockID = new NamespacedKey(SFLock.getPlugin(SFLock.class), "lockid");
@@ -42,31 +43,68 @@ public class FLockCommand {
 
         // /sflock lock
 
-        CommandAPICommand lockBlock = new CommandAPICommand("lock")
-                .withPermission("sflock.lock")
+        CommandAPICommand generateLock = new CommandAPICommand("generate")
+                .withPermission("sflock.generatelock")
                 .withArguments(new GreedyStringArgument("lockName"))
-                .executesPlayer(FLockCommand::lockBlock);
+                .executesPlayer(FLockCommand::generateLock);
+
+        CommandAPICommand removeLock = new CommandAPICommand("remove")
+                .withPermission("sflock.removelock")
+                .withArguments(allLocks)
+                .executesPlayer(FLockCommand::removeLock);
+
+        CommandAPICommand viewLock = new CommandAPICommand("view")
+                .withPermission("sflock.view")
+                .withArguments(allLocks)
+                .executesPlayer(FLockCommand::viewLock);
+
+        CommandAPICommand updateLockLocation = new CommandAPICommand("location")
+                .withPermission("sflock.update.location")
+                .withArguments(allLocks)
+                .executesPlayer(FLockCommand::updateLockLocation);
+
+        CommandAPICommand updateLockName = new CommandAPICommand("name")
+                .withPermission("sflock.update.name")
+                .withArguments(allLocks)
+                .withArguments(new GreedyStringArgument("newName"))
+                .executesPlayer(FLockCommand::updateLockName);
+
+        CommandAPICommand updateLock = new CommandAPICommand("update")
+                .withSubcommand(updateLockLocation)
+                .withSubcommand(updateLockName);
+
+        CommandAPICommand lock = new CommandAPICommand("lock")
+                .withSubcommand(generateLock)
+                .withSubcommand(removeLock)
+                .withSubcommand(viewLock)
+                .withSubcommand(updateLock);
 
         // /sflock key generate/invalidate
         CommandAPICommand generateKey = new CommandAPICommand("generate")
                 .withArguments(keyTextures)
-                .withOptionalArguments(allLocks)
+                .withArguments(allLocks)
                 .withPermission("sflock.generatekey")
                 .executesPlayer(FLockCommand::generateKey);
 
         // /sflock key invalidate
 
+        CommandAPICommand invalidateKey = new CommandAPICommand("invalidate")
+                .withPermission("sflock.invalidatekey")
+                .withArguments(allLocks)
+                .executesPlayer(FLockCommand::invalidateKey);
+
         CommandAPICommand key = new CommandAPICommand("key")
-                .withSubcommand(generateKey);
+                .withSubcommand(generateKey)
+                .withSubcommand(invalidateKey);
 
         // /sflock
         new CommandAPICommand("sflock")
-                .withSubcommand(lockBlock)
+                .withSubcommand(lock)
                 .withSubcommand(key)
                 .register();
     }
 
-    private static void lockBlock(Player sender, CommandArguments args) throws WrapperCommandSyntaxException {
+    private static void generateLock(Player sender, CommandArguments args) throws WrapperCommandSyntaxException {
         String lockName = args.getByClass("lockName", String.class);
 
         Block block = sender.getTargetBlockExact(10);
@@ -149,6 +187,154 @@ public class FLockCommand {
 
         sender.sendMessage(PluginHeader.getPluginSuccessMessage(
                 "Vous avez généré une clé pour le verrou " + lockedBlock.getID()
+        ));
+    }
+
+    private static void invalidateKey(Player sender, CommandArguments args) throws WrapperCommandSyntaxException {
+        String id = args.getByClassOrDefault("lockID", String.class, "");
+
+        LockedBlock lockedBlock = SFLock.lockMap.getLockedBlockByID(id);
+
+        if (lockedBlock == null) {
+            throw CommandAPIPaper.failWithAdventureComponent(PluginHeader.getPluginErrorMessage(
+                    "Le verrou demandé n'existe pas"
+            ));
+        }
+
+        lockedBlock.setKeyUUID(UUID.randomUUID());
+
+        SFLock.getPlugin(SFLock.class).getServer().getScheduler().runTaskAsynchronously(SFLock.getPlugin(SFLock.class), runner -> {
+            try {
+                SFLock.config.save(SFLock.configFile);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        sender.sendMessage(PluginHeader.getPluginSuccessMessage(
+                "Vous avez invalidé les clés du verrou " + lockedBlock.getID() + "."
+        ));
+    }
+
+    private static void removeLock(Player sender, CommandArguments args) throws WrapperCommandSyntaxException  {
+        String id = args.getByClassOrDefault("lockID", String.class, "");
+
+        LockedBlock lockedBlock = SFLock.lockMap.getLockedBlockByID(id);
+
+        if (lockedBlock == null) {
+            throw CommandAPIPaper.failWithAdventureComponent(PluginHeader.getPluginErrorMessage(
+                    "Le verrou demandé n'existe pas"
+            ));
+        }
+
+        SFLock.lockMap.remove(lockedBlock.getLoc());
+        SFLock.config.set("locks." + lockedBlock.getID(), null);
+
+        SFLock.getPlugin(SFLock.class).getServer().getScheduler().runTaskAsynchronously(SFLock.getPlugin(SFLock.class), runner -> {
+            try {
+                SFLock.config.save(SFLock.configFile);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        sender.sendMessage(PluginHeader.getPluginSuccessMessage(
+                "Le verrou " + lockedBlock.getID() + " a bien été supprimé."
+        ));
+    }
+
+    private static void viewLock(Player sender, CommandArguments args) throws WrapperCommandSyntaxException {
+        String id = args.getByClassOrDefault("lockID", String.class, "");
+
+        LockedBlock lockedBlock = SFLock.lockMap.getLockedBlockByID(id);
+
+        if (lockedBlock == null) {
+            throw CommandAPIPaper.failWithAdventureComponent(PluginHeader.getPluginErrorMessage(
+                    "Le verrou demandé n'existe pas"
+            ));
+        }
+
+        sender.sendMessage(PluginHeader.getPluginHeader().append(
+                lockedBlock.getInfoComponent()
+        ));
+    }
+
+    private static void updateLockLocation(Player sender, CommandArguments args) throws WrapperCommandSyntaxException {
+        //Get LockedBlock
+        String id = args.getByClassOrDefault("lockID", String.class, "");
+
+        LockedBlock lockedBlock = SFLock.lockMap.getLockedBlockByID(id);
+
+        if (lockedBlock == null) {
+            throw CommandAPIPaper.failWithAdventureComponent(PluginHeader.getPluginErrorMessage(
+                    "Le verrou demandé n'existe pas"
+            ));
+        }
+
+        //Get Block looked at
+
+        Block targetBlock = sender.getTargetBlockExact(10);
+
+        if (targetBlock == null || !LockedBlock.isAllowedType(targetBlock)) {
+            throw CommandAPIPaper.failWithAdventureComponent(PluginHeader.getPluginErrorMessage(
+               "Block cible invalide."
+            ));
+        }
+
+        //Remove the LockedBlock from the registry
+        SFLock.lockMap.remove(lockedBlock.getLoc());
+
+        //Change LockedBlock coords
+        lockedBlock.setLoc(targetBlock.getLocation());
+
+        //Add it back to the registry
+        SFLock.lockMap.add(lockedBlock.getLoc(), lockedBlock);
+
+        SFLock.getPlugin(SFLock.class).getServer().getScheduler().runTaskAsynchronously(SFLock.getPlugin(SFLock.class), runner -> {
+            try {
+                SFLock.config.save(SFLock.configFile);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        sender.sendMessage(PluginHeader.getPluginSuccessMessage(
+                "La position du verrou a bien été mise à jour."
+        ));
+    }
+
+    private static void updateLockName(Player sender, CommandArguments args) throws WrapperCommandSyntaxException {
+        //Get LockedBlock
+        String id = args.getByClassOrDefault("lockID", String.class, "");
+
+        LockedBlock lockedBlock = SFLock.lockMap.getLockedBlockByID(id);
+
+        if (lockedBlock == null) {
+            throw CommandAPIPaper.failWithAdventureComponent(PluginHeader.getPluginErrorMessage(
+                    "Le verrou demandé n'existe pas"
+            ));
+        }
+
+        String newName = args.getByClassOrDefault("newName", String.class, "");
+
+        if (newName.isBlank()) {
+            throw CommandAPIPaper.failWithAdventureComponent(PluginHeader.getPluginErrorMessage(
+                    "Nouveau nom invalide"
+            ));
+        }
+
+        lockedBlock.setName(newName);
+
+        SFLock.getPlugin(SFLock.class).getServer().getScheduler().runTaskAsynchronously(SFLock.getPlugin(SFLock.class), runner -> {
+            try {
+                SFLock.config.save(SFLock.configFile);
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
+        sender.sendMessage(PluginHeader.getPluginSuccessMessage(
+                "Le nom du verrou a bien été changé."
         ));
     }
 }

@@ -11,11 +11,27 @@ permissions:
       sflock.lock: true
       sflock.bypass: true
       sflock.generatekey: true
-  sflock.lock:
+      sflock.invalidatekey: true
+  sflock.generatelock:
     description: "Permission to create lock."
+  sflock.removelock:
+    description: "Permission to remove a lock."
+  sflock.viewlock:
+    description: "Permission to view a lock's information."
   sflock.bypass:
     description: "Permission that allows to bypass all locks."
   sflock.generatekey:
     description: "Permission to generate a key for a lock."
+  sflock.invalidatekey:
+    description: "Permission to invalidate all keys for a given lock."
   sflock.view:
     description: "Permission to view a lock and to see all locks in suggestions."
+  sflock.update.*:
+    description: "Permission to update a lock."
+    children:
+      sflock.update.location: true
+      sflock.update.name: true
+  sflock.update.location:
+    description: "Permission to update the location of a lock."
+  sflock.update.name:
+    description: "Permission to update the name of a lock."

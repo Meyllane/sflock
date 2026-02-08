@@ -188,4 +188,26 @@ public class LockedBlock implements ConfigurationSerializable {
 
         return keyLore;
     }
+
+    private Component getInfoHeader() {
+        return Component.text("=== Information sur " + this.ID + " ===")
+                .color(TextColor.fromHexString("#40F0F5"))
+                .appendNewline();
+    }
+
+    private Component getInfoBody() {
+        return Component.text(" -- Nom : " + this.name)
+                .appendNewline()
+                .append(Component.text(" -- Coords (X/Y/Z/World) : " +
+                        this.loc.getBlockX() + "/" +
+                        this.loc.getBlockY() + "/" +
+                        this.loc.getBlockZ() + "/" +
+                        this.loc.getWorld().getName())
+                )
+                .color(TextColor.fromHexString("#CCCCCC"));
+    }
+
+    public Component getInfoComponent() {
+        return this.getInfoHeader().append(this.getInfoBody());
+    }
 }
