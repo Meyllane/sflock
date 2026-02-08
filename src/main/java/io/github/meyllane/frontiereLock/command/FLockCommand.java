@@ -40,20 +40,26 @@ public class FLockCommand {
                 )
         ));
 
+        // /sflock lock
+
         CommandAPICommand lockBlock = new CommandAPICommand("lock")
                 .withPermission("sflock.lock")
                 .withArguments(new GreedyStringArgument("lockName"))
                 .executesPlayer(FLockCommand::lockBlock);
 
+        // /sflock key generate/invalidate
         CommandAPICommand generateKey = new CommandAPICommand("generate")
                 .withArguments(keyTextures)
                 .withOptionalArguments(allLocks)
                 .withPermission("sflock.generatekey")
                 .executesPlayer(FLockCommand::generateKey);
 
+        // /sflock key invalidate
+
         CommandAPICommand key = new CommandAPICommand("key")
                 .withSubcommand(generateKey);
 
+        // /sflock
         new CommandAPICommand("sflock")
                 .withSubcommand(lockBlock)
                 .withSubcommand(key)
@@ -111,25 +117,15 @@ public class FLockCommand {
     }
 
     private static void generateKey(Player sender, CommandArguments args) throws WrapperCommandSyntaxException {
-        //Check if player is looking at a locked block
-        Block block = sender.getTargetBlockExact(10);
         LockedBlock lockedBlock;
         String keyTexture = args.getByClassOrDefault("keyTexture", String.class, "card_blue");
 
-        if (block == null || !LockedBlock.isAllowedType(block)) {
-            String id = args.getByClassOrDefault("lockID", String.class, "");
+        String id = args.getByClassOrDefault("lockID", String.class, "");
+        lockedBlock = SFLock.lockMap.getLockedBlockByID(id);
 
-            lockedBlock = SFLock.lockMap.getLockedBlockByID(id);
-            if (lockedBlock == null) throw CommandAPIPaper.failWithAdventureComponent(PluginHeader.getPluginErrorMessage(
-                    "L'ID demandé n'existe pas."
-            ));
-        } else {
-            lockedBlock = LockedBlock.getLockedBlock(
-                    LockedBlock.getLocationsToCheck(block)
-            );
-
-            if (lockedBlock == null) throw CommandAPIPaper.failWithAdventureComponent(PluginHeader.getPluginErrorMessage(
-                    "Ce block n'a pas de verrou actif."
+        if (lockedBlock == null) {
+            throw CommandAPIPaper.failWithAdventureComponent(PluginHeader.getPluginErrorMessage(
+                    "Le verrou demandé n'existe pas."
             ));
         }
 
