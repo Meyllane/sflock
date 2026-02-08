@@ -5,6 +5,7 @@ import io.github.meyllane.frontiereLock.command.FLockCommand;
 import io.github.meyllane.frontiereLock.datastruct.LockedBlock;
 import io.github.meyllane.frontiereLock.datastruct.LockedBlockRegistry;
 import io.github.meyllane.frontiereLock.listener.onPlayerInteractListener;
+import io.github.meyllane.frontiereLock.listener.onRedstoneEventListener;
 import org.bukkit.Location;
 import org.bukkit.NamespacedKey;
 import org.bukkit.block.data.BlockData;
@@ -41,6 +42,7 @@ public final class SFLock extends JavaPlugin {
 
         //Listener registration
         getServer().getPluginManager().registerEvents(new onPlayerInteractListener(), this);
+        getServer().getPluginManager().registerEvents(new onRedstoneEventListener(), this);
 
         CommandAPI.onEnable();
 
