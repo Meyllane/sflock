@@ -25,7 +25,6 @@ import java.util.stream.Collectors;
 public class onPlayerInteractListener implements Listener {
     @EventHandler
     public void onPlayerBlockUse(PlayerInteractEvent event) {
-        Audience aud = Audience.audience(event.getPlayer());
         Block block = event.getClickedBlock();
         if (event.getAction().isLeftClick() || block == null) return;
 
@@ -50,23 +49,8 @@ public class onPlayerInteractListener implements Listener {
             if (stack == null) continue;
             if (stack.isEmpty() && stack.getType() != Material.RABBIT_FOOT) continue;
 
-            //TODO : To be exported in a helper function, for clarity?
-            if (stack.getType() == Material.BUNDLE) {
-                BundleContents bundle = stack.getData(DataComponentTypes.BUNDLE_CONTENTS);
-                contents.addAll(
-                        new ArrayList<>(bundle.contents())
-                );
-            }
-
-            //TODO : To be exported in a helper function, for clarity?
-            if (stack.getType() == Material.SHULKER_BOX) {
-                BlockStateMeta im = (BlockStateMeta) stack.getItemMeta();
-                ShulkerBox box = (ShulkerBox) im.getBlockState();
-                List<ItemStack> boxContent = Arrays.stream(box.getInventory().getContents())
-                        .filter(Objects::nonNull)
-                        .collect(Collectors.toCollection(ArrayList::new));
-                contents.addAll(boxContent);
-            }
+            extractFromBundle(stack, contents);
+            extractFromShulker(stack, contents);
 
             PersistentDataContainerView pdc = stack.getPersistentDataContainer();
 
@@ -92,6 +76,26 @@ public class onPlayerInteractListener implements Listener {
             player.sendMessage(PluginHeader.getPluginErrorMessage(
                     "Ce block est verrouillé. (" + lockedBlock.getID() + ")"
             ));
+        }
+    }
+
+    private static void extractFromShulker(ItemStack stack, ArrayList<@Nullable ItemStack> contents) {
+        if (stack.getType() == Material.SHULKER_BOX) {
+            BlockStateMeta im = (BlockStateMeta) stack.getItemMeta();
+            ShulkerBox box = (ShulkerBox) im.getBlockState();
+            List<ItemStack> boxContent = Arrays.stream(box.getInventory().getContents())
+                    .filter(Objects::nonNull)
+                    .collect(Collectors.toCollection(ArrayList::new));
+            contents.addAll(boxContent);
+        }
+    }
+
+    private static void extractFromBundle(ItemStack stack, ArrayList<@Nullable ItemStack> contents) {
+        if (stack.getType() == Material.BUNDLE) {
+            BundleContents bundle = stack.getData(DataComponentTypes.BUNDLE_CONTENTS);
+            contents.addAll(
+                    new ArrayList<>(bundle.contents())
+            );
         }
     }
 }
