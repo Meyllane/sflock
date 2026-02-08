@@ -6,7 +6,6 @@ import io.github.meyllane.frontiereLock.utils.PluginHeader;
 import io.papermc.paper.datacomponent.DataComponentTypes;
 import io.papermc.paper.datacomponent.item.BundleContents;
 import io.papermc.paper.persistence.PersistentDataContainerView;
-import net.kyori.adventure.audience.Audience;
 import org.bukkit.Material;
 import org.bukkit.block.Block;
 import org.bukkit.block.ShulkerBox;
@@ -91,7 +90,7 @@ public class onPlayerInteractListener implements Listener {
     }
 
     private static void extractFromBundle(ItemStack stack, ArrayList<@Nullable ItemStack> contents) {
-        if (stack.getType() == Material.BUNDLE) {
+        if (stack.hasData(DataComponentTypes.BUNDLE_CONTENTS)) {
             BundleContents bundle = stack.getData(DataComponentTypes.BUNDLE_CONTENTS);
             contents.addAll(
                     new ArrayList<>(bundle.contents())
