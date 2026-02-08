@@ -19,7 +19,7 @@ public class LockedBlock implements ConfigurationSerializable {
     private final String ID;
     private Location loc;
     private String name;
-    private final UUID keyUUID;
+    private UUID keyUUID;
 
     public LockedBlock(String ID, Location loc, String name) {
         this.loc = loc;
@@ -57,6 +57,10 @@ public class LockedBlock implements ConfigurationSerializable {
 
     public UUID getKeyUUID() {
         return keyUUID;
+    }
+
+    public void setKeyUUID(UUID newKey) {
+        this.keyUUID = newKey;
     }
 
     @Override
